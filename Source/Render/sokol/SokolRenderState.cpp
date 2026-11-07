@@ -858,6 +858,15 @@ void cSokolRender::CreateCommand(VertexBuffer* vb, size_t vertices, IndexBuffer*
             vs_params->un_mvp = isOrthographicProjSet ? orthoVP : (activeCommandW * activeCommandVP);
             break;
         }
+        case SOKOL_SHADER_ID_chaos: {
+            auto vs_params = reinterpret_cast<chaos_vs_params_t*>(cmd->vs_params);
+            vs_params->un_mvp = isOrthographicProjSet ? orthoVP : (activeCommandW * activeCommandVP);
+            vs_params->tex0_mat = activeTextureTransform[0];
+            vs_params->tex1_mat = activeTextureTransform[1];
+            vs_params->tex2_mat = activeTextureTransform[2];
+            vs_params->tex3_mat = activeTextureTransform[3];
+            break;
+        }
         case SOKOL_SHADER_ID_tile_map: {
             auto vs_params = reinterpret_cast<tile_map_vs_params_t*>(cmd->vs_params);
             vs_params->un_mvp = isOrthographicProjSet ? orthoVP : (activeCommandW * activeCommandVP);

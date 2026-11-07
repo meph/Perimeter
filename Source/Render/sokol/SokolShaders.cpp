@@ -11,3 +11,4 @@ SOKOL_SHADER_IMPL(mesh_tex1);
 SOKOL_SHADER_IMPL(shadow_tex1);
 SOKOL_SHADER_IMPL(shadow_normal_tex1);
 SOKOL_SHADER_IMPL(tile_map);
+SOKOL_SHADER_IMPL(chaos);

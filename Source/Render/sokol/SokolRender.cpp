@@ -722,6 +722,10 @@ void SokolCommand::CreateShaderParams() {
             vs_params = new mesh_texture_vs_params_t();
             vs_params_len = sizeof(mesh_texture_vs_params_t);
             break;
+        case SOKOL_SHADER_ID_chaos:
+            vs_params = new chaos_vs_params_t();
+            vs_params_len = sizeof(chaos_vs_params_t);
+            break;
         case SOKOL_SHADER_ID_tile_map:
             vs_params = new tile_map_vs_params_t();
             fs_params = new tile_map_fs_params_t();
@@ -782,6 +786,9 @@ void SokolCommand::ClearShaderParams() {
             break;
         case SOKOL_SHADER_ID_mesh_tex1:
             delete reinterpret_cast<mesh_texture_vs_params_t*>(vs_params);
+            break;
+        case SOKOL_SHADER_ID_chaos:
+            delete reinterpret_cast<chaos_vs_params_t*>(vs_params);
             break;
         case SOKOL_SHADER_ID_tile_map:
             delete reinterpret_cast<tile_map_vs_params_t*>(vs_params);

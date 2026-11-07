@@ -73,6 +73,7 @@ IF (OPTION_PROCESS_SHADERS)
     PERIMETER_SOKOL_SHDC(shadow_texture          shadow_tex1         "")
     PERIMETER_SOKOL_SHDC(shadow_texture          shadow_normal_tex1  "SHADER_NORMAL")
     PERIMETER_SOKOL_SHDC(mesh_tex1               mesh_tex1           "")
+    PERIMETER_SOKOL_SHDC(chaos                   chaos               "")
 ENDIF()
 
 #Select Sokol API per platform and options

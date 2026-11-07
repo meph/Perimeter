@@ -62,7 +62,10 @@ void bind_vertex_fmt(SokolPipelineContext& ctx, uint32_t fmt_flag) {
             bind_attr_slot(ctx, "vs_texcoord0", SG_VERTEXFORMAT_FLOAT2);
             break;
         case VERTEX_FMT_TEX2:
-            bind_attr_slot(ctx, "vs_texcoord1", SG_VERTEXFORMAT_FLOAT2);
+            //Chaos shader only reads first texcoord, second is skipped via stride
+            if (ctx.pipeline_type != PIPELINE_TYPE_CHAOS) {
+                bind_attr_slot(ctx, "vs_texcoord1", SG_VERTEXFORMAT_FLOAT2);
+            }
             break;
         case VERTEX_FMT_NORMAL:
             bind_attr_slot(ctx, "vs_normal", SG_VERTEXFORMAT_FLOAT3);
@@ -121,6 +124,13 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
             break;
         case PIPELINE_TYPE_TILE_MAP:
             context.shader_funcs = &shader_tile_map;
+            break;
+        case PIPELINE_TYPE_CHAOS:
+            if (context.vertex_fmt == sVertexXYZDT2::fmt) {
+                context.shader_funcs = &shader_chaos;
+            } else {
+                fprintf(stderr, "RegisterPipeline: PIPELINE_TYPE_CHAOS unknown pipeline format '%d'\n", context.vertex_fmt);
+            }
             break;
         case PIPELINE_TYPE_OBJECT_SHADOW:
             switch (context.vertex_fmt) {
@@ -278,6 +288,9 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
         //Shaders may not consume all attributes of this format, so stride must be explicit
         desc.layout.buffers[0].stride = static_cast<int>(sizeof(sVertexDot3));
     }
+    if (context.pipeline_type == PIPELINE_TYPE_CHAOS) {
+        desc.layout.buffers[0].stride = static_cast<int>(sizeof(sVertexXYZDT2));
+    }
 
     //Created, store on our pipelines
     SOKOL_SHADER_ID shader_id = context.shader_funcs->get_id();
@@ -325,6 +338,10 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
         case SOKOL_SHADER_ID_mesh_tex1:
             vs_params_name = "mesh_texture_vs_params";
             vs_params_size = sizeof(mesh_texture_vs_params_t);
+            break;
+        case SOKOL_SHADER_ID_chaos:
+            vs_params_name = "chaos_vs_params";
+            vs_params_size = sizeof(chaos_vs_params_t);
             break;
         case SOKOL_SHADER_ID_tile_map:
             vs_params_name = "tile_map_vs_params";

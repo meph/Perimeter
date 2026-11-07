@@ -675,6 +675,11 @@ void cVisGeneric::SetShadowMapSelf4x4(bool b4x4)
 
 bool cVisGeneric::PossibilityBumpChaos()
 {
+#ifdef PERIMETER_SOKOL
+    if (gb_RenderDevice && gb_RenderDevice->GetRenderSelection() == DEVICE_SOKOL) {
+        return true;
+    }
+#endif
 #ifdef PERIMETER_D3D9
 #ifdef __APPLE__
     return false;

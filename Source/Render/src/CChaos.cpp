@@ -2,6 +2,11 @@
 #ifdef PERIMETER_D3D9
 #include "D3DRender.h"
 #endif
+#ifdef PERIMETER_SOKOL
+#include "sokol/SokolIncludes.h"
+#include "sokol/SokolResources.h"
+#include "sokol/SokolRender.h"
+#endif
 #include "DrawBuffer.h"
 #include "CChaos.h"
 #include "VertexFormat.h"
@@ -61,6 +66,12 @@ cChaos::cChaos(Vect2f g_size, const char* str_tex0, const char* str_tex1, const 
 			RELEASE(pTex0);
 			RELEASE(pTexRender);
 		}
+	}
+#endif
+#ifdef PERIMETER_SOKOL
+	if (enablebump_ && gb_RenderDevice->GetRenderSelection() == DEVICE_SOKOL) {
+		pTexBump=GetTexLibrary()->GetElement(str_bump,"NoMipMap NoBlur");
+		sokol_bump = pTexBump != nullptr;
 	}
 #endif
 
@@ -124,7 +135,13 @@ void cChaos::Draw(cCamera *DrawNode) {
     }
 #endif
 
-    //TODO we need to add bump texture too
+#ifdef PERIMETER_SOKOL
+    if (sokol_bump) {
+        DrawSokolBump(DrawNode);
+        return;
+    }
+#endif
+
     float umin,vmin;
     Mat4f mat;
 
@@ -151,6 +168,43 @@ void cChaos::Draw(cCamera *DrawNode) {
     gb_RenderDevice->SetTextureTransform(0, Mat4f::ID);
     gb_RenderDevice->SetTextureTransform(1, Mat4f::ID);
 }
+
+#ifdef PERIMETER_SOKOL
+static Mat4f ChaosUVTransform(float scale, float u, float v) {
+    Mat4f mat;
+    memset(&mat,0,sizeof(mat));
+    mat.xx=mat.yy=scale;
+    mat.zz=mat.ww=1;
+    mat.zx = u;
+    mat.zy = v;
+    return mat;
+}
+
+void cChaos::DrawSokolBump(cCamera *DrawNode) {
+    cSokolRender* rd = dynamic_cast<cSokolRender*>(gb_RenderDevice);
+    if (!rd) return;
+
+    //Same scroll speeds as D3D9 BUMP_PS14 path, see chaos.vsl
+    rd->SetTextureTransform(0, ChaosUVTransform(1.0f,
+        sfmod(time*stime_tex0.x*uvmul*2.0f,1.0f), sfmod(time*stime_tex0.y*uvmul*2.0f,1.0f)));
+    rd->SetTextureTransform(1, ChaosUVTransform(1.0f,
+        sfmod(time*stime_tex1.x*uvmul*0.5f,1.0f), sfmod(time*stime_tex1.y*uvmul*0.5f,1.0f)));
+    rd->SetTextureTransform(2, ChaosUVTransform(1.0f,
+        sfmod(time*stime_tex0.x,1.0f), sfmod(time*stime_tex0.y,1.0f)));
+    rd->SetTextureTransform(3, ChaosUVTransform(0.5f,
+        sfmod(time*stime_tex1.y*0.2f,1.0f), sfmod(time*stime_tex1.x*0.2f,1.0f)));
+
+    rd->SetMaterialChaos(pTex0_0, pTex0_1, pTexBump);
+    rd->SetWorldMatXf(GetGlobalMatrix());
+
+    db->Draw();
+
+    for (int i = 0; i < 4; i++) {
+        rd->SetTextureTransform(i, Mat4f::ID);
+    }
+    rd->SetTexture(2, nullptr, 0);
+}
+#endif
 
 #ifdef PERIMETER_D3D9
 void cChaos::DrawD3D9(cCamera *DrawNode) {

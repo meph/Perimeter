@@ -21,6 +21,7 @@ struct shader_funcs {
 #include "sokol/shaders/shadow_normal_tex1.h"
 #include "sokol/shaders/shadow_tex1.h"
 #include "sokol/shaders/tile_map.h"
+#include "sokol/shaders/chaos.h"
 
 #define SOKOL_SHADER(MODULE_NAME) \
 extern shader_funcs shader_##MODULE_NAME;
@@ -47,6 +48,7 @@ SOKOL_SHADER(mesh_tex1);
 SOKOL_SHADER(shadow_tex1);
 SOKOL_SHADER(shadow_normal_tex1);
 SOKOL_SHADER(tile_map);
+SOKOL_SHADER(chaos);
 
 using mesh_normal_texture_vs_params_t = mesh_normal_tex1_mesh_normal_texture_vs_params_t;
 using mesh_normal_texture_fs_params_t = mesh_normal_tex1_mesh_normal_texture_fs_params_t;
@@ -61,6 +63,7 @@ static_assert(sizeof(mesh_color_tex1_mesh_color_texture_fs_params_t) == sizeof(m
 using mesh_texture_vs_params_t = mesh_tex1_mesh_texture_vs_params_t;
 using tile_map_vs_params_t = tile_map_tile_map_vs_params_t;
 using tile_map_fs_params_t = tile_map_tile_map_fs_params_t;
+using chaos_vs_params_t = chaos_chaos_vs_params_t;
 //shadow_tex1 and shadow_normal_tex1 share the params struct, so we pick shadow_tex1
 using shadow_texture_vs_params_t = shadow_tex1_shadow_texture_vs_params_t;
 using shadow_texture_fs_params_t = shadow_tex1_shadow_texture_fs_params_t;

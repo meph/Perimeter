@@ -312,6 +312,8 @@ public:
     bool IsEnableSelfShadow() override;
 
     void SetNoMaterial(eBlendMode blend,float Phase=0,cTexture *Texture0=0,cTexture *Texture1=0,eColorMode color_mode=COLOR_MOD) override;
+    ///Chaos surface distorted by bump map, UV scroll comes from texture transforms 0-3
+    void SetMaterialChaos(cTexture* Texture0, cTexture* Texture1, cTexture* TextureBump);
     void SetBlendState(eBlendMode blend) override;
 
     void BeginDrawMesh(bool obj_mesh, bool use_shadow) override;

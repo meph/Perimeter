@@ -33,6 +33,19 @@ void cSokolRender::SetNoMaterial(eBlendMode blend, float Phase, cTexture* Textur
     activePipelineType = PIPELINE_TYPE_MESH;
 }
 
+void cSokolRender::SetMaterialChaos(cTexture* Texture0, cTexture* Texture1, cTexture* TextureBump) {
+    SetColorMode(COLOR_MOD);
+    SetBlendState(ALPHA_NONE);
+    SetTexture(0, Texture0, 0);
+    SetTexture(1, Texture1, 0);
+    SetTexture(2, TextureBump, 0);
+
+    if (activePipelineType != PIPELINE_TYPE_CHAOS) {
+        FinishActiveDrawBuffer();
+    }
+    activePipelineType = PIPELINE_TYPE_CHAOS;
+}
+
 // Sprites / 2d textures
 
 void cSokolRender::DrawSprite2(int x1,int y1,int dx,int dy,

@@ -23,6 +23,8 @@ class cChaos: public cIUnkObj
 	BUMP_TYPE enablebump;
 #endif
 	float uvmul;
+	//Bump distortion through sokol chaos shader
+	bool sokol_bump = false;
 
 	enum
 	{
@@ -46,6 +48,7 @@ public:
 	virtual void Draw(cCamera *DrawNode);
 
     void DrawD3D9(cCamera *DrawNode);
+    void DrawSokolBump(cCamera *DrawNode);
 	void RenderAllTexture();
 protected:
 	void SetupDB();
