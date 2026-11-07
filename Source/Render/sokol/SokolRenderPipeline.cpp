@@ -342,6 +342,8 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
         case SOKOL_SHADER_ID_chaos:
             vs_params_name = "chaos_vs_params";
             vs_params_size = sizeof(chaos_vs_params_t);
+            fs_params_name = "chaos_fs_params";
+            fs_params_size = sizeof(chaos_fs_params_t);
             break;
         case SOKOL_SHADER_ID_tile_map:
             vs_params_name = "tile_map_vs_params";

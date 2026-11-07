@@ -336,6 +336,18 @@ int cSokolRender::Init(int xScr, int yScr, int mode, SDL_Window* wnd, int Refres
     emptyTexture->label = "EmptySlotTexture";
     PrepareSokolTexture(emptyTexture);
 
+    //Create empty shadow map, contents are never used but shaders need a depth image bound
+    sg_image_desc* shadowdesc = new sg_image_desc();
+    shadowdesc->label = nullptr;
+    shadowdesc->width = shadowdesc->height = 16;
+    shadowdesc->pixel_format = SG_PIXELFORMAT_DEPTH;
+    shadowdesc->render_target = true;
+    shadowdesc->num_mipmaps = 1;
+    shadowdesc->usage = SG_USAGE_IMMUTABLE;
+    emptyShadowTexture = new SokolTexture2D(shadowdesc);
+    emptyShadowTexture->label = "EmptyShadowTexture";
+    PrepareSokolTexture(emptyShadowTexture);
+
     for (int i = 0; i < GetMaxTextureSlots(); ++i) {
         activeTextureTransform[i] = Mat4f::ID;
         SetTextureImage(i, nullptr);
@@ -403,6 +415,8 @@ int cSokolRender::Done() {
     shaders.clear();
     delete emptyTexture;
     emptyTexture = nullptr;
+    delete emptyShadowTexture;
+    emptyShadowTexture = nullptr;
     //At this point sokol stuff should be cleaned up, is important as calling sg_* after this will result in crashes
     //Make sure is called only once, as repeated shutdowns may crash in some backends/OSes
     if (do_sg_shutdown) {
@@ -725,6 +739,8 @@ void SokolCommand::CreateShaderParams() {
         case SOKOL_SHADER_ID_chaos:
             vs_params = new chaos_vs_params_t();
             vs_params_len = sizeof(chaos_vs_params_t);
+            fs_params = new chaos_fs_params_t();
+            fs_params_len = sizeof(chaos_fs_params_t);
             break;
         case SOKOL_SHADER_ID_tile_map:
             vs_params = new tile_map_vs_params_t();
@@ -789,6 +805,7 @@ void SokolCommand::ClearShaderParams() {
             break;
         case SOKOL_SHADER_ID_chaos:
             delete reinterpret_cast<chaos_vs_params_t*>(vs_params);
+            delete reinterpret_cast<chaos_fs_params_t*>(fs_params);
             break;
         case SOKOL_SHADER_ID_tile_map:
             delete reinterpret_cast<tile_map_vs_params_t*>(vs_params);

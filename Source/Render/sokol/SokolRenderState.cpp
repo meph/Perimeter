@@ -835,6 +835,31 @@ void cSokolRender::CreateCommand(VertexBuffer* vb, size_t vertices, IndexBuffer*
             vs_params->model = isOrthographicProjSet ? Mat4f::ID : activeCommandW;
             vs_params->tex0_mat = activeTextureTransform[0];
             fs_params->material = activeGlobalLight ? activeMaterial : SOKOL_MAT_NONE;
+            //Shadow map goes to slot 3, otherwise an empty depth image so it's never sampled while being rendered
+            fs_params->shadow = activeMeshShadow ? 1 : 0;
+            fs_params->reflection = activeMeshReflection ? 1 : 0;
+            GetFogParams(fs_params->fog_color, fs_params->fog_params);
+            {
+                const Vect3f& cam = GetDrawNode()->GetPos();
+                fs_params->camera_pos[0] = cam.x;
+                fs_params->camera_pos[1] = cam.y;
+                fs_params->camera_pos[2] = cam.z;
+                fs_params->camera_pos[3] = 1.0f;
+            }
+            vs_params->view = isOrthographicProjSet ? Mat4f::ID : GetDrawNode()->matView;
+            memcpy(fs_params->point_pos0, &activePointPos[0], sizeof(float) * 4);
+            memcpy(fs_params->point_color0, &activePointColor[0], sizeof(float) * 4);
+            memcpy(fs_params->point_pos1, &activePointPos[1], sizeof(float) * 4);
+            memcpy(fs_params->point_color1, &activePointColor[1], sizeof(float) * 4);
+            vs_params->un_shadow = activeMeshShadow ? (activeCommandW * activeShadowMatrix) : Mat4f::ID;
+            SokolTexture2D* shadow_tex = emptyShadowTexture;
+            if (activeMeshShadow) {
+                shadow_tex = shadowMapRenderTarget->texture->GetFrameImage(0)->sg;
+            }
+            if (!shadow_tex->image || shadow_tex->dirty) {
+                PrepareSokolTexture(shadow_tex);
+            }
+            cmd->SetImage(3, shadow_tex->image);
             memcpy(fs_params->diffuse, &activeDiffuse, sizeof(float) * 4);
             memcpy(fs_params->ambient, &activeAmbient, sizeof(float) * 4);
             memcpy(fs_params->specular, &activeSpecular, sizeof(float) * 4);
@@ -865,6 +890,8 @@ void cSokolRender::CreateCommand(VertexBuffer* vb, size_t vertices, IndexBuffer*
             vs_params->tex1_mat = activeTextureTransform[1];
             vs_params->tex2_mat = activeTextureTransform[2];
             vs_params->tex3_mat = activeTextureTransform[3];
+            auto fs_params = reinterpret_cast<chaos_fs_params_t*>(cmd->fs_params);
+            GetFogParams(fs_params->fog_color, fs_params->fog_params);
             break;
         }
         case SOKOL_SHADER_ID_tile_map: {
@@ -875,6 +902,7 @@ void cSokolRender::CreateCommand(VertexBuffer* vb, size_t vertices, IndexBuffer*
 
             auto fs_params = reinterpret_cast<tile_map_fs_params_t*>(cmd->fs_params);
             memcpy(&fs_params->un_tile_color, &activeCommandTileColor, sizeof(float) * 4);
+            GetFogParams(reinterpret_cast<float*>(&fs_params->un_fog_color), reinterpret_cast<float*>(&fs_params->un_fog_params));
             break;
         }
     }
@@ -1169,7 +1197,7 @@ uint32_t cSokolRender::GetRenderState(eRenderStateOption option) {
         case RS_BILINEAR:
             return 1;
         case RS_FOGENABLE:
-            return 0;
+            return activeFogEnable;
         default:
             xassert(0);
             return 0;
@@ -1223,6 +1251,14 @@ int cSokolRender::SetRenderState(eRenderStateOption option, uint32_t value) {
         case RS_BILINEAR:
             //Useless as we can't change globally
             break;
+        case RS_FOGENABLE: {
+            bool state = value != 0;
+            if (state != activeFogEnable) {
+                FinishActiveDrawBuffer();
+                activeFogEnable = state;
+            }
+            break;
+        }
         default:
             //Unknown
             break;
@@ -1232,7 +1268,28 @@ int cSokolRender::SetRenderState(eRenderStateOption option, uint32_t value) {
 
 
 void cSokolRender::SetGlobalFog(const sColor4f &color,const Vect2f &v) {
-    //TODO implement this
+    if (v.x < 0 || v.y < 0) {
+        SetRenderState(RS_FOGENABLE, false);
+        return;
+    }
+    if (activeFogColor != color || activeFogRange.x != v.x || activeFogRange.y != v.y) {
+        FinishActiveDrawBuffer();
+        activeFogColor = color;
+        activeFogRange = v;
+    }
+    SetRenderState(RS_FOGENABLE, true);
+}
+
+void cSokolRender::GetFogParams(float* color, float* params) const {
+    color[0] = activeFogColor.r;
+    color[1] = activeFogColor.g;
+    color[2] = activeFogColor.b;
+    color[3] = 1.0f;
+    float range = activeFogRange.y - activeFogRange.x;
+    params[0] = activeFogRange.y;
+    params[1] = range > 0.001f ? 1.0f / range : 1000.0f;
+    params[2] = activeFogEnable ? 1.0f : 0.0f;
+    params[3] = 0.0f;
 }
 
 void cSokolRender::SetGlobalLight(Vect3f *vLight, sColor4f *Ambient, sColor4f *Diffuse, sColor4f *Specular) {

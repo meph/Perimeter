@@ -20,6 +20,7 @@ layout(location=2) out vec3 fs_uv2;
 layout(location=3) out vec3 fs_uv3;
 layout(location=4) out vec2 fs_uv4;
 layout(location=5) out vec2 fs_uv5;
+layout(location=6) out float fs_fog_z;
 
 const float offset = 1.0f / 1024.0f;
 
@@ -40,6 +41,7 @@ void main() {
 
     fs_uv4 = vs_texcoord0;
     fs_uv5 = vs_position.xy * un_inv_world_size;
+    fs_fog_z = gl_Position.w;
 }
 @end
 
@@ -47,6 +49,8 @@ void main() {
 //Uniforms
 uniform tile_map_fs_params {
     vec4 un_tile_color;
+    vec4 un_fog_color;
+    vec4 un_fog_params;
 };
 uniform sampler un_sampler0;
 uniform sampler un_sampler1; //shadow sampler
@@ -61,6 +65,7 @@ layout(location=2) in vec3 fs_uv2; // shadow map 3
 layout(location=3) in vec3 fs_uv3; // shadow map 4
 layout(location=4) in vec2 fs_uv4; // diffuse
 layout(location=5) in vec2 fs_uv5; // light map
+layout(location=6) in float fs_fog_z;
 
 //Fragment shader outputs
 out vec4 frag_color;
@@ -74,6 +79,13 @@ out vec4 frag_color;
 // ambient color
 const vec3 c0 = vec3(SHADE, MSHADE, 0.25f);
 const vec3 c4 = vec3(0.25f, 0.25f, 0.25f);
+
+//Linear fog by camera depth like D3D: fog_params = (end, 1/(end-start), enabled, 0)
+vec3 apply_fog(vec3 color, float depth, vec4 fog_color, vec4 fog_params) {
+    if (fog_params.z <= 0.0) return color;
+    float f = clamp((fog_params.x - depth) * fog_params.y, 0.0, 1.0);
+    return mix(fog_color.rgb, color, f);
+}
 
 void main() {
     // shadow
@@ -91,6 +103,8 @@ void main() {
 
     // light map
     result *= texture(sampler2D(un_tex2, un_sampler0), fs_uv5).rgb;
+
+    result = apply_fog(result, fs_fog_z, un_fog_color, un_fog_params);
 
     frag_color = vec4(result, un_tile_color.a);
 }

@@ -130,6 +130,24 @@ private:
     SokolRenderTarget* lightMapRenderTarget = nullptr;
     bool use_shadow = false;
     cCamera* pShadow = nullptr;
+    //Meshes being drawn should receive shadow from shadow map
+    bool activeMeshShadow = false;
+    //Current mesh material has sphere mapped reflection at texture 1
+    bool activeMeshReflection = false;
+    //Fog state, see SetGlobalFog
+    bool activeFogEnable = false;
+    sColor4f activeFogColor = {};
+    Vect2f activeFogRange = {};
+    ///Writes fog color and params as used by shaders
+    void GetFogParams(float* color, float* params) const;
+    //Point lights affecting current mesh, xyz position and w 1/radius^2
+    Vect4f activePointPos[2] = {};
+    sColor4f activePointColor[2] = {};
+    void SetPointLights(const std::vector<class cUnkLight*>* lights);
+    //Bound in place of shadow map when meshes don't receive shadow
+    SokolTexture2D* emptyShadowTexture = nullptr;
+    ///Recalculates activeShadowMatrix from current shadow camera
+    void UpdateShadowMatrix();
     float kShadow = 0.25f;
 
     //Empty texture when texture slot is unused

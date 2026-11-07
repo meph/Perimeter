@@ -10,6 +10,7 @@
 #include "MeshTri.h"
 #include "ObjMesh.h"
 #include "TileMap.h"
+#include "UnkLight.h"
 
 void cSokolRender::SetNoMaterial(eBlendMode blend, float Phase, cTexture* Texture0, cTexture* Texture1,
                                  eColorMode color_mode) {
@@ -89,10 +90,60 @@ void cSokolRender::OutText(int x,int y,const char *string,const sColor4f& color,
 void cSokolRender::BeginDrawMesh(bool obj_mesh, bool use_shadow_) {
     use_shadow = use_shadow_;
     pShadow = GetDrawNode()->FindCildCamera(ATTRCAMERA_SHADOWMAP);
+    bool mesh_shadow = use_shadow && pShadow && shadowMapRenderTarget;
+    if (mesh_shadow != activeMeshShadow) {
+        FinishActiveDrawBuffer();
+        activeMeshShadow = mesh_shadow;
+    }
+    if (activeMeshShadow) {
+        UpdateShadowMatrix();
+    }
 }
 
 void cSokolRender::EndDrawMesh() {
-    //TODO
+    if (activeMeshShadow) {
+        FinishActiveDrawBuffer();
+        activeMeshShadow = false;
+    }
+}
+
+void cSokolRender::SetPointLights(const std::vector<cUnkLight*>* lights) {
+    Vect4f pos[2] = {};
+    sColor4f color[2] = {};
+    size_t count = lights ? std::min<size_t>(lights->size(), 2) : 0;
+    for (size_t i = 0; i < count; i++) {
+        cUnkLight* l = (*lights)[i];
+        const Vect3f& p = l->GetPos();
+        float radius = std::max(l->GetRadius(), 1.0f);
+        pos[i] = Vect4f(p.x, p.y, p.z, 1.0f / (radius * radius));
+        color[i] = l->GetDiffuse();
+    }
+    for (int i = 0; i < 2; i++) {
+        if (activePointPos[i] != pos[i] || activePointColor[i] != color[i]) {
+            FinishActiveDrawBuffer();
+            activePointPos[i] = pos[i];
+            activePointColor[i] = color[i];
+        }
+    }
+}
+
+void cSokolRender::UpdateShadowMatrix() {
+    auto pShadowMap = shadowMapRenderTarget->texture;
+    float fOffsetX = 0.5f + (0.0f / pShadowMap->GetWidth());
+    float fOffsetY = 0.5f + (0.0f / pShadowMap->GetWidth());
+    float range = 1;
+    float fBias = -0.0001f * range;
+    Mat4f matTexAdj( 0.5f,     0.0f,     0.0f,  0.0f,
+                    0.0f,    -0.5f,     0.0f,  0.0f,
+                    0.0f,     0.0f,     range, 0.0f,
+                    fOffsetX, fOffsetY, fBias, 1.0f );
+
+    Mat4f matlight = pShadow->matViewProj;
+    Mat4f shadow_matrix = matlight * matTexAdj;
+    if (!activeShadowMatrix.eq(shadow_matrix, 0)) {
+        FinishActiveDrawBuffer();
+        activeShadowMatrix = shadow_matrix;
+    }
 }
 
 void cSokolRender::SetSimplyMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* data) {
@@ -108,6 +159,12 @@ void cSokolRender::SetSimplyMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* da
     bool bump = data->mat&MAT_BUMP;
     //Bump map is stored at second texture, draw it only when enabled and loaded
     bool draw_bump = bump && Option_EnableBump && data->Tex[1];
+    //Reflection texture is stored at second texture like bump, they never come together
+    bool reflection = !bump && (data->mat & MAT_TEXNORMAL_STAGE2) && data->Tex[1];
+    if (reflection != activeMeshReflection) {
+        FinishActiveDrawBuffer();
+        activeMeshReflection = reflection;
+    }
     
     cTexture* Texture0 = data->Tex[0];
     eBlendMode blend=ALPHA_NONE;
@@ -160,7 +217,7 @@ void cSokolRender::SetSimplyMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* da
 }
 
 void cSokolRender::DrawNoMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* data) {
-    //TODO SetPointLight(mesh->GetRootNode()->GetLight());
+    SetPointLights(&mesh->GetRootNode()->GetLight());
 
     SetWorldMatXf(mesh->GetGlobalMatrix());
     Mat4f& tex0mat = activeTextureTransform[0];
@@ -262,17 +319,7 @@ void cSokolRender::SetMaterialTilemap(cTileMap *TileMap) {
     auto pShadowMap = shadowMapRenderTarget->texture;
     auto pLightMap = lightMapRenderTarget->texture;
 
-    float fOffsetX = 0.5f + (0.0f / pShadowMap->GetWidth());
-    float fOffsetY = 0.5f + (0.0f / pShadowMap->GetWidth());
-    float range = 1;
-    float fBias = -0.0001f * range;
-    Mat4f matTexAdj( 0.5f,     0.0f,     0.0f,  0.0f,
-                    0.0f,    -0.5f,     0.0f,  0.0f,
-                    0.0f,     0.0f,     range, 0.0f,
-                    fOffsetX, fOffsetY, fBias, 1.0f );
-
-    Mat4f matlight = pShadow->matViewProj;
-    activeShadowMatrix = matlight * matTexAdj;
+    UpdateShadowMatrix();
 
     SetTextureImage(0, pShadowMap->GetFrameImage(0));
     SetTextureImage(2, pLightMap->GetFrameImage(0));

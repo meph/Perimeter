@@ -64,6 +64,7 @@ using mesh_texture_vs_params_t = mesh_tex1_mesh_texture_vs_params_t;
 using tile_map_vs_params_t = tile_map_tile_map_vs_params_t;
 using tile_map_fs_params_t = tile_map_tile_map_fs_params_t;
 using chaos_vs_params_t = chaos_chaos_vs_params_t;
+using chaos_fs_params_t = chaos_chaos_fs_params_t;
 //shadow_tex1 and shadow_normal_tex1 share the params struct, so we pick shadow_tex1
 using shadow_texture_vs_params_t = shadow_tex1_shadow_texture_vs_params_t;
 using shadow_texture_fs_params_t = shadow_tex1_shadow_texture_fs_params_t;
