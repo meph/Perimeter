@@ -542,6 +542,7 @@ void GameShell::GameStart(const MissionDescription& mission)
 
     int fogEnable = 1;
     IniManager("Perimeter.ini", false).getInt("Graphics", "FogEnable", fogEnable);
+    check_command_line_parameter("fog", fogEnable);
 	IniManager world_ini(GetTargetName(vMap.worldIniFile).c_str());
     if (fogEnable) {
         FogStart = world_ini.getFloat("Visualization Parameters", "FogStart");
@@ -895,6 +896,8 @@ void GameShell::Show()
 
 		if(FogStart>=0 && FogEnd>0)//terFogStart=300,terFogEnd=1000
 				terRenderDevice->SetGlobalFog(FogColor,Vect2f(FogStart,FogEnd));
+		else //Disabled by FogEnable or world, make sure fog from previous world doesn't stay
+				terRenderDevice->SetGlobalFog(FogColor,Vect2f(-1,-1));
 		
 		if(chaos)
 			chaos->Draw();
