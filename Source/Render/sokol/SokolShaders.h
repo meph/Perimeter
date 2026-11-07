@@ -16,6 +16,7 @@ struct shader_funcs {
 #include "sokol/shaders/mesh_color_tex1.h"
 #include "sokol/shaders/mesh_color_tex2.h"
 #include "sokol/shaders/mesh_normal_tex1.h"
+#include "sokol/shaders/mesh_normal_bump_tex1.h"
 #include "sokol/shaders/mesh_tex1.h"
 #include "sokol/shaders/shadow_normal_tex1.h"
 #include "sokol/shaders/shadow_tex1.h"
@@ -41,6 +42,7 @@ shader_funcs shader_##MODULE_NAME = { \
 SOKOL_SHADER(mesh_color_tex1);
 SOKOL_SHADER(mesh_color_tex2);
 SOKOL_SHADER(mesh_normal_tex1);
+SOKOL_SHADER(mesh_normal_bump_tex1);
 SOKOL_SHADER(mesh_tex1);
 SOKOL_SHADER(shadow_tex1);
 SOKOL_SHADER(shadow_normal_tex1);
@@ -48,6 +50,9 @@ SOKOL_SHADER(tile_map);
 
 using mesh_normal_texture_vs_params_t = mesh_normal_tex1_mesh_normal_texture_vs_params_t;
 using mesh_normal_texture_fs_params_t = mesh_normal_tex1_mesh_normal_texture_fs_params_t;
+//mesh_normal_tex1 and mesh_normal_bump_tex1 share the params struct
+static_assert(sizeof(mesh_normal_tex1_mesh_normal_texture_vs_params_t) == sizeof(mesh_normal_bump_tex1_mesh_normal_texture_vs_params_t));
+static_assert(sizeof(mesh_normal_tex1_mesh_normal_texture_fs_params_t) == sizeof(mesh_normal_bump_tex1_mesh_normal_texture_fs_params_t));
 //mesh_color_tex1 and mesh_color_tex2 share the params struct, so we pick tex2
 using mesh_color_texture_vs_params_t = mesh_color_tex2_mesh_color_texture_vs_params_t;
 using mesh_color_texture_fs_params_t = mesh_color_tex2_mesh_color_texture_fs_params_t;

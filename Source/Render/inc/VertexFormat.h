@@ -6,9 +6,7 @@ const static vertex_fmt_t VERTEX_FMT_NORMAL    = (1<<0);
 const static vertex_fmt_t VERTEX_FMT_DIFFUSE   = (1<<1);
 const static vertex_fmt_t VERTEX_FMT_TEX1      = (1<<2);
 const static vertex_fmt_t VERTEX_FMT_TEX2      = (1<<3);
-#ifdef PERIMETER_D3D9
 const static vertex_fmt_t VERTEX_FMT_DOT3      = (1<<4);
-#endif
 
 const static vertex_fmt_t VERTEX_FMT_BITS      = 5;
 
@@ -61,7 +59,6 @@ struct sVertexXYZT1: public sVertexXYZ
 	//inline Vect2f& GetTexel()			{ return *((Vect2f*)&uv[0]); }
 	const static vertex_fmt_t fmt = sVertexXYZ::fmt|VERTEX_FMT_TEX1;
 };
-#ifdef PERIMETER_D3D9
 //Used for bump mapping
 struct sVertexDot3:public sVertexXYZNT1
 {
@@ -70,6 +67,5 @@ struct sVertexDot3:public sVertexXYZNT1
 	Vect3f SxT;
 	const static vertex_fmt_t fmt = sVertexXYZNT1::fmt|VERTEX_FMT_DOT3;
 };
-#endif
 
 #pragma pack(pop)

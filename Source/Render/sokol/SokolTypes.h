@@ -10,6 +10,7 @@ enum SOKOL_SHADER_ID {
     SOKOL_SHADER_ID_mesh_color_tex1,
     SOKOL_SHADER_ID_mesh_color_tex2,
     SOKOL_SHADER_ID_mesh_normal_tex1,
+    SOKOL_SHADER_ID_mesh_normal_bump_tex1,
     SOKOL_SHADER_ID_mesh_tex1,
     SOKOL_SHADER_ID_shadow_tex1,
     SOKOL_SHADER_ID_shadow_normal_tex1,
@@ -20,6 +21,7 @@ enum PIPELINE_TYPE {
     PIPELINE_TYPE_MESH,
     PIPELINE_TYPE_TILE_MAP,
     PIPELINE_TYPE_OBJECT_SHADOW,
+    PIPELINE_TYPE_MESH_BUMP,
     PIPELINE_TYPE_MAX,
 };
 const PIPELINE_TYPE PIPELINE_TYPE_DEFAULT = PIPELINE_TYPE_MESH;

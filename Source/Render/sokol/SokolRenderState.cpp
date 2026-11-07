@@ -827,7 +827,8 @@ void cSokolRender::CreateCommand(VertexBuffer* vb, size_t vertices, IndexBuffer*
             fs_params->un_tex2_lerp = activeCommandTex2Lerp;
             break;
         }
-        case SOKOL_SHADER_ID_mesh_normal_tex1: {
+        case SOKOL_SHADER_ID_mesh_normal_tex1:
+        case SOKOL_SHADER_ID_mesh_normal_bump_tex1: {
             auto vs_params = reinterpret_cast<mesh_normal_texture_vs_params_t*>(cmd->vs_params);
             auto fs_params = reinterpret_cast<mesh_normal_texture_fs_params_t*>(cmd->fs_params);
             shader_set_common_params(vs_params, fs_params);

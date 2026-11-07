@@ -198,11 +198,9 @@ void cMeshStatic::EndBuildMesh(bool bump)
 
     //Write vertex and indices into DrawBuffer
     int fmt = sVertexXYZNT1::fmt;
-#ifdef PERIMETER_D3D9
-    if (bump && gb_RenderDevice->GetRenderSelection() == DEVICE_D3D9) {
+    if (bump) {
         fmt = sVertexDot3::fmt;
     }
-#endif
     db.Create(n_vertex, false, n_indices, false, fmt, PT_TRIANGLES);
 
     void* pVertex = nullptr;

@@ -6,6 +6,7 @@
 SOKOL_SHADER_IMPL(mesh_color_tex1);
 SOKOL_SHADER_IMPL(mesh_color_tex2);
 SOKOL_SHADER_IMPL(mesh_normal_tex1);
+SOKOL_SHADER_IMPL(mesh_normal_bump_tex1);
 SOKOL_SHADER_IMPL(mesh_tex1);
 SOKOL_SHADER_IMPL(shadow_tex1);
 SOKOL_SHADER_IMPL(shadow_normal_tex1);

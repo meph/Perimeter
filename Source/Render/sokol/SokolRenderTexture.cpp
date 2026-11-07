@@ -1,3 +1,4 @@
+#include <utility>
 #include <string>
 #include <vector>
 #include "xmath.h"
@@ -105,6 +106,11 @@ int cSokolRender::CreateTexture(cTexture* Texture, cFileImage* FileImage, bool e
             //We need to convert grayscale bumpmap to normalmap
             if (Texture->GetAttribute(TEXTURE_BUMP) && !Texture->GetAttribute(TEXTURE_NORMAL)) {
                 Texture->ConvertBumpToNormal(buf);
+                //Converted normal is stored as Z,X,Y bytes (see ColorByNormal), which D3D reads
+                //as BGR so shader gets (Y,X,Z), do the same here by swapping R and B
+                for (size_t n = 0; n + 2 < tex_len; n += 4) {
+                    std::swap(buf[n], buf[n + 2]);
+                }
             }
 
             //Load buffer into desc image

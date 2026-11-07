@@ -12,17 +12,33 @@ uniform mesh_normal_texture_vs_params {
 layout(location=0) in vec3 vs_position;
 layout(location=1) in vec3 vs_normal;
 layout(location=2) in vec2 vs_texcoord0;
+#if defined(SHADER_BUMP)
+//Tangent space basis, S follows texture U and T follows texture V, normal acts as SxT
+layout(location=3) in vec3 vs_tangent_s;
+layout(location=4) in vec3 vs_tangent_t;
+#endif
 
 //Fragment shader outputs
 layout(location=0) out vec3 fs_normal;
 layout(location=1) out vec2 fs_uv0;
 layout(location=2) out vec3 fs_position;
+#if defined(SHADER_BUMP)
+layout(location=3) out vec2 fs_uv1;
+layout(location=4) out vec3 fs_tangent_s;
+layout(location=5) out vec3 fs_tangent_t;
+#endif
 
 void main() {
     gl_Position = un_mvp * vec4(vs_position, 1.0f);
     fs_normal = (model * vec4(vs_normal, 0)).xyz;
     fs_uv0 = (tex0_mat * vec4(vs_texcoord0, 1, 1)).xy;
     fs_position = (model * vec4(vs_position, 0)).xyz;
+#if defined(SHADER_BUMP)
+    //Bump map uses untransformed texture coordinates
+    fs_uv1 = vs_texcoord0;
+    fs_tangent_s = (model * vec4(vs_tangent_s, 0)).xyz;
+    fs_tangent_t = (model * vec4(vs_tangent_t, 0)).xyz;
+#endif
 }
 @end
  
@@ -43,11 +59,20 @@ uniform mesh_normal_texture_fs_params {
 };
 uniform sampler un_sampler0;
 uniform texture2D un_tex0;
+#if defined(SHADER_BUMP)
+//Normal map, RGB holds tangent space normal along S, T and SxT
+uniform texture2D un_tex1;
+#endif
 
 //Fragment shader inputs from Vertex shader
 layout(location=0) in vec3 fs_normal;
 layout(location=1) in vec2 fs_uv0;
 layout(location=2) in vec3 fs_position;
+#if defined(SHADER_BUMP)
+layout(location=3) in vec2 fs_uv1;
+layout(location=4) in vec3 fs_tangent_s;
+layout(location=5) in vec3 fs_tangent_t;
+#endif
 
 //Fragment shader outputs
 out vec4 frag_color;
@@ -79,9 +104,17 @@ vec4 phong(vec3 pos, vec3 nrm, vec3 l, vec3 eye,
 
 void main() {
     frag_color = texture(sampler2D(un_tex0, un_sampler0), fs_uv0);
+#if defined(SHADER_BUMP)
+    vec3 bump = texture(sampler2D(un_tex1, un_sampler0), fs_uv1).xyz * 2.0 - 1.0;
+    vec3 normal = bump.x * normalize(fs_tangent_s)
+                + bump.y * normalize(fs_tangent_t)
+                + bump.z * normalize(fs_normal);
+#else
+    vec3 normal = fs_normal;
+#endif
     if (material > 0) {
         frag_color = frag_color * gamma(
-            phong(fs_position, fs_normal, -light_dir, eye_pos,
+            phong(fs_position, normal, -light_dir, eye_pos,
                     light_ambient, light_diffuse, light_specular,
                     ambient.xyz, diffuse.xyz, specular.xyz, spec_power
         ));

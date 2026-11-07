@@ -93,6 +93,8 @@ void cSokolRender::SetSimplyMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* da
     }
 
     bool bump = data->mat&MAT_BUMP;
+    //Bump map is stored at second texture, draw it only when enabled and loaded
+    bool draw_bump = bump && Option_EnableBump && data->Tex[1];
     
     cTexture* Texture0 = data->Tex[0];
     eBlendMode blend=ALPHA_NONE;
@@ -135,12 +137,13 @@ void cSokolRender::SetSimplyMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* da
     SetColorMode(COLOR_MOD);
     SetBlendState(blend);
     SetTexture(0, Texture0, data->MaterialAnimPhase);
-    SetTexture(1, bump ? nullptr: data->Tex[1], data->MaterialAnimPhase);
+    SetTexture(1, (bump && !draw_bump) ? nullptr : data->Tex[1], data->MaterialAnimPhase);
 
-    if (activePipelineType != PIPELINE_TYPE_MESH) {
+    PIPELINE_TYPE pipeline_type = draw_bump ? PIPELINE_TYPE_MESH_BUMP : PIPELINE_TYPE_MESH;
+    if (activePipelineType != pipeline_type) {
         FinishActiveDrawBuffer();
     }
-    activePipelineType = PIPELINE_TYPE_MESH;
+    activePipelineType = pipeline_type;
 }
 
 void cSokolRender::DrawNoMaterialMesh(cObjMesh* mesh, sDataRenderMaterial* data) {

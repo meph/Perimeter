@@ -705,6 +705,7 @@ void SokolCommand::CreateShaderParams() {
             fs_params_len = sizeof(mesh_color_texture_fs_params_t);
             break;
         case SOKOL_SHADER_ID_mesh_normal_tex1:
+        case SOKOL_SHADER_ID_mesh_normal_bump_tex1:
             vs_params = new mesh_normal_texture_vs_params_t();
             fs_params = new mesh_normal_texture_fs_params_t();
             vs_params_len = sizeof(mesh_normal_texture_vs_params_t);            
@@ -770,6 +771,7 @@ void SokolCommand::ClearShaderParams() {
             delete reinterpret_cast<mesh_color_texture_fs_params_t*>(fs_params);
             break;
         case SOKOL_SHADER_ID_mesh_normal_tex1:
+        case SOKOL_SHADER_ID_mesh_normal_bump_tex1:
             delete reinterpret_cast<mesh_normal_texture_vs_params_t*>(vs_params);
             delete reinterpret_cast<mesh_normal_texture_fs_params_t*>(fs_params);
             break;

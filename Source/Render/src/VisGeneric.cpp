@@ -455,6 +455,11 @@ bool cVisGeneric::GetShowType(eShowType type)
 
 bool cVisGeneric::PossibilityBump()
 {
+#ifdef PERIMETER_SOKOL
+    if (gb_RenderDevice && gb_RenderDevice->GetRenderSelection() == DEVICE_SOKOL) {
+        return true;
+    }
+#endif
 #ifdef PERIMETER_D3D9
 	return gb_RenderDevice3D && gb_RenderDevice3D->hasAdvanceDrawType();
 #else

@@ -76,12 +76,6 @@ void cMeshTri::InvertTri() {
 
 void cMeshTri::CalcBumpST()
 {
-    //TODO implement this for sokol
-    if (gb_RenderDevice->GetRenderSelection() != DEVICE_D3D9) {
-        return;
-    }
-    
-#ifdef PERIMETER_D3D9
 	if(db->vb.VertexSize!=sizeof(sVertexDot3))
 	{
 		VISASSERT(0);
@@ -172,7 +166,6 @@ void cMeshTri::CalcBumpST()
 	}
 
 	gb_RenderDevice->UnlockVertexBuffer(db->vb);
-#endif
 }
 
 bool cMeshTri::Intersect(const Vect3f& p0,const Vect3f& p1)

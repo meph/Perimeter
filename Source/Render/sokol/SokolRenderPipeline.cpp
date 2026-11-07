@@ -67,6 +67,13 @@ void bind_vertex_fmt(SokolPipelineContext& ctx, uint32_t fmt_flag) {
         case VERTEX_FMT_NORMAL:
             bind_attr_slot(ctx, "vs_normal", SG_VERTEXFORMAT_FLOAT3);
             break;
+        case VERTEX_FMT_DOT3:
+            //Only bump shaders read the tangents, others just skip them via stride
+            if (0 <= ctx.shader_funcs->attr_slot("vs_tangent_s")) {
+                bind_attr_slot(ctx, "vs_tangent_s", SG_VERTEXFORMAT_FLOAT3);
+                bind_attr_slot(ctx, "vs_tangent_t", SG_VERTEXFORMAT_FLOAT3);
+            }
+            break;
         default:
             fprintf(stderr, "bind_vertex_fmt: unregistered fmt '%d'\n", fmt_flag);
             break;
@@ -90,10 +97,25 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
                     context.shader_funcs = &shader_mesh_color_tex2;
                     break;
                 case sVertexXYZNT1::fmt:
+                case sVertexDot3::fmt:
                     context.shader_funcs = &shader_mesh_normal_tex1;
                     break;
                 default:
                     fprintf(stderr, "RegisterPipeline: PIPELINE_TYPE_MESH unknown pipeline format '%d'\n", context.vertex_fmt);
+                    break;
+            }
+            break;
+        case PIPELINE_TYPE_MESH_BUMP:
+            switch (context.vertex_fmt) {
+                case sVertexDot3::fmt:
+                    context.shader_funcs = &shader_mesh_normal_bump_tex1;
+                    break;
+                case sVertexXYZNT1::fmt:
+                    //No tangents available, draw without bump
+                    context.shader_funcs = &shader_mesh_normal_tex1;
+                    break;
+                default:
+                    fprintf(stderr, "RegisterPipeline: PIPELINE_TYPE_MESH_BUMP unknown pipeline format '%d'\n", context.vertex_fmt);
                     break;
             }
             break;
@@ -106,6 +128,7 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
                     context.shader_funcs = &shader_shadow_tex1;
                     break;
                 case sVertexXYZNT1::fmt:
+                case sVertexDot3::fmt:
                     context.shader_funcs = &shader_shadow_normal_tex1;
                     break;
                 default:
@@ -250,6 +273,11 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
     bind_vertex_fmt(context, VERTEX_FMT_TEX1);
     bind_vertex_fmt(context, VERTEX_FMT_TEX2);
     bind_vertex_fmt(context, VERTEX_FMT_NORMAL);
+    bind_vertex_fmt(context, VERTEX_FMT_DOT3);
+    if (context.vertex_fmt & VERTEX_FMT_DOT3) {
+        //Shaders may not consume all attributes of this format, so stride must be explicit
+        desc.layout.buffers[0].stride = static_cast<int>(sizeof(sVertexDot3));
+    }
 
     //Created, store on our pipelines
     SOKOL_SHADER_ID shader_id = context.shader_funcs->get_id();
@@ -281,6 +309,7 @@ void cSokolRender::RegisterPipeline(SokolPipelineContext context) {
             fs_params_size = sizeof(mesh_color_texture_fs_params_t);
             break;
         case SOKOL_SHADER_ID_mesh_normal_tex1:
+        case SOKOL_SHADER_ID_mesh_normal_bump_tex1:
             vs_params_name = "mesh_normal_texture_vs_params";
             fs_params_name = "mesh_normal_texture_fs_params";
             vs_params_size = sizeof(mesh_normal_texture_vs_params_t);
